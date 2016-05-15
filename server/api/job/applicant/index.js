@@ -11,7 +11,7 @@ router.get('/:jobId/applicants/:applicantId/checkAlreadyApplied', controller.alr
 router.post('/:jobId/applicants', controller.create);
 router.post('/:jobId/applicants/reapply', controller.reapply);
 router.put('/:jobId/applicants/:applicantId', controller.update);
-router.get('/:jobId/applicants/:applicantId',controller.show);
+router.get('/:jobId/applicants/:applicantId', controller.show);
 
 
 module.exports = router;

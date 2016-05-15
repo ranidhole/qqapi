@@ -35,12 +35,14 @@ export default function (app) {
   app.use('/applications/accounts/api', require('../applications/accounts/api/login'));
   app.use('/applications/dashboard/api', require('../applications/dashboard/api/bdQuery'));
 
+  require('./../components/oauth2/express')(app);
+
   app.oauth = oAuthComponent;
   // OAuth Token authorization_code, password, refresh_token
   app.all('/oauth/token', app.oauth.grant());
 
   // Todo: Security Risk
-  if (env === 'production') {
+  if (env !== 'production') {
     // OAuth Authentication Middleware
     app.use(app.oauth.authorise());
   } else {
@@ -53,8 +55,6 @@ export default function (app) {
   }
   // OAuth Authorise from Third party applications
   app.use('/authorise', require('./../api/authorise'));  // /authorise
-  // Todo: Temporary proxy - Removed in future
-  app.use('/api/authorise', require('./../api/authorise'));
   app.use(app.oauth.errorHandler());
 
   if (env === 'production') {

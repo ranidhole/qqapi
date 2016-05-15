@@ -91,6 +91,7 @@ export default function(app) {
   app.use('/api/applicants', require('./api/applicant'));
   app.use('/api/partners', require('./api/partner'));
   app.use('/api/users', require('./api/user'));
+  app.use('/user', require('./api/user/proxy.js'));
 
   // All undefined asset or api routes should return a 404
   //app.route('/:url(api|auth|components|app|bower_components|assets)/*')

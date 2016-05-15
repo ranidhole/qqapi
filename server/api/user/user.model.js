@@ -2,6 +2,7 @@
 
 const crypto = require('crypto');
 const salt = 'DYhG93b0fIxfs2guVoUubasdfajfkljasdjfaklsdjflakrfWwvniR2G0FgaC9mi';
+const _ = require('lodash');
 
 export default function (sequelize, DataTypes) {
   const User = sequelize.define('User', {
@@ -125,6 +126,14 @@ export default function (sequelize, DataTypes) {
     timestamps: false,
     underscored: true,
     instanceMethods: {
+      verifyPasswordAsync: function verifyPassword(password) {
+        const hashedPass = crypto
+          .createHash('md5')
+          .update(salt + password)
+          .digest('hex');
+        return (hashedPass === this.password) ?
+          _.pick(this.toJSON(), ['id']) : new Error('Check password!');
+      },
       verifyPassword: function verifyPassword(password, cb) {
         const hashedPass = crypto
           .createHash('md5')
