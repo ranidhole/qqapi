@@ -41,21 +41,12 @@ export default function (app) {
   // OAuth Token authorization_code, password, refresh_token
   app.all('/oauth/token', app.oauth.grant());
 
-  // Todo: Security Risk
-  if (env !== 'production') {
-    // OAuth Authentication Middleware
-    app.use(app.oauth.authorise());
-  } else {
-    // OAuth Proxy - Set your user id, group_id, client_id
-    app.use(function (req, res, next) {
-      const request = req
-      request.user = config.USER;
-      return next();
-    });
-  }
+  app.oauth.authenticate = require('./../components/oauthjs/authenticate')
+
   // OAuth Authorise from Third party applications
   app.use('/authorise', require('./../api/authorise'));  // /authorise
-  app.use(app.oauth.errorHandler());
+  app.use('/api/authorise', require('./../api/authorise'));  // /authorise
+
 
   if (env === 'production') {
     app.use(morgan('dev'));
