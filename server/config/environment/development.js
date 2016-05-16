@@ -38,4 +38,5 @@ module.exports = {
     SLACK: process.env.URLS_SLACK,
   },
 
+  AUTH: process.env.AUTH,
 };

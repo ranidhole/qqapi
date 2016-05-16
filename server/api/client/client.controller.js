@@ -15,7 +15,7 @@ import handlebars from 'handlebars';
 import wkhtmltopdf from 'wkhtmltopdf';
 import db, { Client, Applicant, Job, JobApplication, ApplicantState, State, Func, Solr, User,
   JobAllocation, Industry, ClientPreferredFunction, ClientPreferredIndustry,
-  QueuedTask, EntityType, Logo } from '../../sqldb';
+  QueuedTask } from '../../sqldb';
 import config from './../../config/environment';
 import phpSerialize from './../../components/php-serialize';
 import logger from './../../components/logger';
@@ -23,7 +23,7 @@ import mkdirp from 'mkdirp-then';
 
 
 function handleError(res, argStatusCode, err) {
-  console.log(err);
+  logger.error(err);
   const statusCode = argStatusCode || 500;
   res.status(statusCode).send(err);
 }
@@ -264,7 +264,7 @@ export function updatePreferences(req, res) {
   .catch(err => handleError(res, 500, err));
 }
 
-export function dashboard(req, res) {
+export function actionCounts(req, res) {
   Applicant
     .findAll({
       where: {
@@ -282,7 +282,7 @@ export function dashboard(req, res) {
             model: State,
             attributes: ['name'],
             where: {
-              // id : [6,22,32,33]
+              id: [6, 22, 32, 33],
             },
           },
         },
@@ -294,7 +294,6 @@ export function dashboard(req, res) {
       // Getting count applicant ids wrt state ids
       const _count = _.countBy(_.map(allApplicantsTemp, 'ApplicantState.State.id'));
       // extracting applicant ids from result data which is used later to fetch data from query
-      const _applicantIds = _.map(allApplicantsTemp, 'id');
       const countData = [];
       Object.keys(_count).forEach(id => {
         const widgetItem = {};
@@ -305,483 +304,315 @@ export function dashboard(req, res) {
         countData.push(widgetItem);
       });
 
-      // Fetching data from applicant using solr
+      res.json(countData);
+    })
+    .catch(err => handleError(res, 500, err));
+}
+
+
+export function ratingAndRatios(req, res) {
+  const screeningDataPromise = Applicant.count({
+    where: {
+      user_id: req.user.id,
+    },
+    attributes: ['id'],
+    include: [
+      {
+        model: ApplicantState,
+        attributes: [],
+        where: {
+          state_id: [1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+            23, 24, 25, 28, 29, 30, 31, 33, 34, 35, 36, 38],
+        },
+        include: {
+          model: State,
+          attributes: ['name'],
+        },
+      },
+    ],
+    raw: true,
+  });
+
+  const screeningAllDataPromise = Applicant.count({
+    where: {
+      user_id: req.user.id,
+    },
+    attributes: ['id'],
+    include: [
+      {
+        model: ApplicantState,
+        attributes: [],
+        where: {
+          state_id: [1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+            21, 22, 23, 24, 25, 28, 29, 30, 31, 33, 34, 35, 36, 38],
+        },
+        include: {
+          model: State,
+          attributes: ['name'],
+        },
+      },
+    ],
+    raw: true,
+  });
+
+  // Calculating shortlisting ratio
+  const shortlistingDataPromise = Applicant.count({
+    where: {
+      user_id: req.user.id,
+    },
+    attributes: ['id'],
+    include: [
+      {
+        model: ApplicantState,
+        attributes: [],
+        where: {
+          state_id: [4, 5, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28,
+            29, 30, 31, 33, 34, 35, 36, 38],
+        },
+        include: {
+          model: State,
+          attributes: ['name'],
+        },
+      },
+    ],
+    raw: true,
+  });
+
+  const shortlistingAllDataPromise = Applicant.count({
+    where: {
+      user_id: req.user.id,
+    },
+    attributes: ['id'],
+    include: [
+      {
+        model: ApplicantState,
+        attributes: [],
+        where: {
+          state_id: [2, 3, 4, 5, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20, 21, 22, 23,
+            24, 25, 28, 29, 30, 31, 33, 34, 35, 36, 38],
+        },
+        include: {
+          model: State,
+          attributes: ['name'],
+        },
+      },
+    ],
+    raw: true,
+  });
+
+  return Promise.all([screeningDataPromise, screeningAllDataPromise,
+      shortlistingDataPromise, shortlistingAllDataPromise])
+    .then(promiseReturns => {
+      const screeningRatio = Math.round((promiseReturns[0] / promiseReturns[1]) * 100);
+      const shortlistingRatio = Math.round((promiseReturns[2] / promiseReturns[3]) * 100);
+      const rating = (screeningRatio + shortlistingRatio) / 200 * 5;
+      res.json({ screeningRatio, shortlistingRatio, rating });
+    })
+    .catch(err => handleError(res, 500, err));
+}
+
+
+export function forActions(req, res) {
+  Applicant
+    .findAll({
+      where: {
+        user_id: req.user.id,
+      },
+      attributes: ['id'],
+      include: [
+        {
+          model: ApplicantState,
+          attributes: [],
+          where: {
+            state_id: [6, 22, 32, 33],
+          },
+          include: {
+            model: State,
+            attributes: ['name'],
+            where: {
+              id: [6, 22, 32, 33],
+            },
+          },
+        },
+      ],
+      raw: true,
+    })
+    .then(allApplicants => {
+      const allApplicantsTemp = allApplicants;
+      const _applicantIds = _.map(allApplicantsTemp, 'id');
+
       const solrQuery = Solr.createQuery()
         .q('type_s:applicant')
         .fl('id,name,mobile,email,state_name,exp_designation,exp_employer,_root_')
-        .matchFilter('id', `(${_applicantIds.join(' ')})`);
+        .matchFilter('id', `(${_applicantIds.join(' ')})`)
+        .rows(100);
+
       Solr.get('select', solrQuery, (err, result) => {
         if (err) return handleError(res, 500, err);
-        const applicantData = result.response.docs;
-        if (!allApplicantsTemp.length) return res.json(applicantData);
-
-        const solrInnerQuery = db.Solr
-          .createQuery()
-          .q(`id:(${applicantData.map(a => a._root_).join(' OR ')}) AND type_s:job`)
-          .fl(['role', 'id', 'client_name']);
+        const applicants = result.response.docs;
+        if (!allApplicantsTemp.length) return res.json(applicants);
+        const solrInnerQuery = db.Solr.createQuery()
+          .q(`id:(${applicants.map(a => a._root_).join(' OR ')}) AND type_s:job`)
+          .fl(['role', 'id', 'client_name'])
+          .rows(100);
 
         // Get job to attach to results
         return db.Solr.get('select', solrInnerQuery, (jobErr, jobResult) => {
           if (jobErr) return handleError(res, 500, jobErr);
           const jobs = jobResult.response.docs;
           if (jobs.length) {
-            applicantData.forEach((applicant, key) => {
-              applicantData[key]._root_ = jobs
-                .filter(s => s.id === applicantData[key]._root_)[0];
+            applicants.forEach((applicant, key) => {
+              applicants[key]._root_ = jobs
+                .filter(s => s.id === applicants[key]._root_)[0];
             });
           }
-          const screeningDataPromise = Applicant.count({
-            where: {
-              user_id: req.user.id,
-            },
-            attributes: ['id'],
-            include: [
-              {
-                model: ApplicantState,
-                attributes: [],
-                where: {
-                  state_id: [1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-                    23, 24, 25, 28, 29, 30, 31, 33, 34, 35, 36, 38],
-                },
-                include: {
-                  model: State,
-                  attributes: ['name'],
-                },
-              },
-            ],
-            raw: true,
-          });
-
-          const screeningAllDataPromise = Applicant.count({
-            where: {
-              user_id: req.user.id,
-            },
-            attributes: ['id'],
-            include: [
-              {
-                model: ApplicantState,
-                attributes: [],
-                where: {
-                  state_id: [1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-                    21, 22, 23, 24, 25, 28, 29, 30, 31, 33, 34, 35, 36, 38],
-                },
-                include: {
-                  model: State,
-                  attributes: ['name'],
-                },
-              },
-            ],
-            raw: true,
-          });
-
-          // Calculating shortlisting ratio
-          const shortlistingDataPromise = Applicant.count({
-            where: {
-              user_id: req.user.id,
-            },
-            attributes: ['id'],
-            include: [
-              {
-                model: ApplicantState,
-                attributes: [],
-                where: {
-                  state_id: [4, 5, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28,
-                    29, 30, 31, 33, 34, 35, 36, 38],
-                },
-                include: {
-                  model: State,
-                  attributes: ['name'],
-                },
-              },
-            ],
-            raw: true,
-          });
-
-          const shortlistingAllDataPromise = Applicant.count({
-            where: {
-              user_id: req.user.id,
-            },
-            attributes: ['id'],
-            include: [
-              {
-                model: ApplicantState,
-                attributes: [],
-                where: {
-                  state_id: [2, 3, 4, 5, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20, 21, 22, 23,
-                    24, 25, 28, 29, 30, 31, 33, 34, 35, 36, 38],
-                },
-                include: {
-                  model: State,
-                  attributes: ['name'],
-                },
-              },
-            ],
-            raw: true,
-          });
-
-          // TODO Refactor code to bring joining date
-          const upcomingOfferDataPromise = Applicant.findAll({
-            where: {
-              user_id: req.user.id,
-            },
-            attributes: ['id', 'name'],
-            include: [
-              {
-                model: ApplicantState,
-                attributes: ['id', 'suggested_join_date'],
-                where: {
-                  state_id: [10, 20],
-                  suggested_join_date: {
-                    gte: moment().startOf('day').format('YYYY-MM-DD H:m:s'),
-                  },
-                },
-                include: {
-                  model: State,
-                  attributes: ['name'],
-                },
-              },
-              {
-                model: JobApplication,
-                attributes: ['id'],
-                include: [{
-                  model: Job,
-                  attributes: ['id', 'role', 'user_id'],
-                }],
-              },
-            ],
-            raw: true,
-          }).then(upcomingOfferApplicants => {
-            const _userIds = _.uniq(_.map(upcomingOfferApplicants, 'JobApplications.Job.user_id'));
-            return User.findAll({
-              where: {
-                id: _userIds,
-              },
-              attributes: ['id'],
-              include: {
-                model: Client,
-                attributes: ['id', 'name'],
-              },
-            }).then(_userData => {
-              const upcomingOfferData = upcomingOfferApplicants.map((applicant) => {
-                const userId = _.get(applicant, 'JobApplications.Job.user_id');
-                return {
-                  id: _.get(applicant, 'id'),
-                  name: _.get(applicant, 'name'),
-                  stateId: _.get(applicant, 'ApplicantState.State.id'),
-                  stateName: _.get(applicant, 'ApplicantState.State.name'),
-                  jobId: _.get(applicant, 'JobApplications.Job.id'),
-                  jobRole: _.get(applicant, 'JobApplications.Job.role'),
-                  jobClientId: userId,
-                  jobClientName: _.get(_.filter(
-                    _userData, user => user.id === userId)[0], 'Client.name'),
-                  joinDate: moment(_.get(applicant, 'ApplicantState.suggested_join_date'))
-                    .format('D/MM/YYYY'),
-                };
-              });
-              return upcomingOfferData;
-            });
-          });
-
-          // TODO Refactor Code Optimization and upcoming interview data pending
-          // New Profile data is allocated today data
-          const promiseNewProfileData = JobAllocation.findAll({
-            where: {
-              user_id: req.user.id,
-              created_on: {
-                gte: moment().startOf('day').format('YYYY-MM-DD H:m:s'),
-              },
-            },
-            attributes: ['job_id', 'created_on'],
-            raw: true,
-          });
-
-          // TODO Refactor code to bring Interview Date date
-          const upcomingInterviewDataPromise = Applicant.findAll({
-            where: {
-              user_id: req.user.id,
-            },
-            attributes: ['id', 'name'],
-            include: [
-              {
-                model: ApplicantState,
-                attributes: ['id', 'updated_on'],
-                where: {
-                  state_id: [5, 8, 17],
-                  updated_on: {
-                    gte: moment().startOf('day').format('YYYY-MM-DD H:m:s'),
-                  },
-                },
-                include: {
-                  model: State,
-                  attributes: ['name'],
-                },
-              },
-              {
-                model: JobApplication,
-                attributes: ['id'],
-                include: [{
-                  model: Job,
-                  attributes: ['id', 'role', 'user_id'],
-                }],
-              },
-            ],
-            raw: true,
-          }).then(upcomingIntApplicants => {
-            const _userIds = _.uniq(_.map(upcomingIntApplicants, 'JobApplications.Job.user_id'));
-            return User.findAll({
-              where: {
-                id: _userIds,
-              },
-              attributes: ['id'],
-              include: {
-                model: Client,
-                attributes: ['id', 'name'],
-              },
-            }).then(_userData => {
-              const upcomingInterviewData = upcomingIntApplicants.map((applicant) => {
-                const userId = _.get(applicant, 'JobApplications.Job.user_id');
-                const day = moment().utcOffset('+05:30').calendar('2016-04-01', {
-                  sameDay: '[Today]',
-                  lastDay: '[Tomorrow]', // nextDay: '[Yesterday]',
-                  sameElse: 'DD/MM/YYYY',
-                });
-
-                const time = moment(_.get(applicant, 'ApplicantState.updated_on')).format('h a');
-
-                return {
-                  id: _.get(applicant, 'id'),
-                  name: _.get(applicant, 'name'),
-                  // stateId: _.get(applicant, 'ApplicantStates.State.id'),
-                  stateName: _.get(applicant, 'ApplicantState.State.name'),
-                  jobId: _.get(applicant, 'JobApplications.Job.id'),
-                  jobRole: _.get(applicant, 'JobApplications.Job.role'),
-                  jobClientId: userId,
-                  jobClientName: _.get(_.filter(
-                    _userData, user => user.id === userId)[0], 'Client.name'),
-                  interviewTime: `${time}, ${day}`,
-                  updated_on: moment(_.get(applicant, 'ApplicantState.updated_on'))
-                    .format('D/MM/YYYY h a'),
-                };
-              });
-              return upcomingInterviewData;
-            });
-          });
-
-          return Promise.all([screeningDataPromise, screeningAllDataPromise,
-            shortlistingDataPromise, shortlistingAllDataPromise, upcomingOfferDataPromise,
-            promiseNewProfileData, upcomingInterviewDataPromise])
-            .then(promiseReturns => {
-              const screeningRatio = Math.round((promiseReturns[0] / promiseReturns[1]) * 100);
-              const shortlistingRatio = Math.round((promiseReturns[2] / promiseReturns[3]) * 100);
-              const rating = (screeningRatio + shortlistingRatio) / 200 * 5;
-              const upcomingOfferData = promiseReturns[4];
-              const newProfiles = promiseReturns[5];
-              const upcomingInterviewData = promiseReturns[6];
-              let promise;
-              // Checking if any job is allocated today or not
-              if (newProfiles.length === 0) {
-                promise = Promise.resolve({
-                  countData,
-                  rating,
-                  applicantData,
-                  screeningRatio,
-                  shortlistingRatio,
-                  upcomingOfferData,
-                });
-              } else {
-                // Fetching data from applicant using solr
-                const solrQuery2 = Solr.createQuery()
-                  .q('type_s:job')
-                  .fl('id,role,min_sal,max_sal,job_location,client_name')
-                  .matchFilter('id', `(${_.map(newProfiles, 'job_id').join(' ')})`);
-                promise = Solr.getAsync('select', solrQuery2).then((err2, allApplicantsJobs) => {
-                  let newProfileData = allApplicantsJobs.response.docs;
-                  newProfileData = newProfileData.map(data => {
-                    const profile = { id: data.id, jobLocation: data.job_location,
-                      role: data.role, client_name: data.client_name };
-                    if (typeof data.max_sal !== undefined && typeof data.min_sal !== undefined) {
-                      if (data.max_sal) {
-                        profile.salaryRange = `${data.min_sal}-${data.max_sal} Lakhs`;
-                      }
-                    }
-                    return profile;
-                  });
-
-                  return {
-                    countData,
-                    rating,
-                    applicantData,
-                    screeningRatio,
-                    shortlistingRatio,
-                    upcomingOfferData,
-                    upcomingInterviewData,
-                    newProfileData,
-                  };
-                });
-              }
-              return Promise.all([promise]).then(prRe => res.json(prRe[0]));
-            });
+          return res.json(applicants);
         });
       });
     })
     .catch(err => handleError(res, 500, err));
 }
 
-export function billing(req, res) {
-  Client
-    .find({
-      where: {
-        id: req.user.client_id
+export function upcomingOffers(req, res) {
+  Applicant.findAll({
+    where: {
+      user_id: req.user.id,
+    },
+    attributes: ['id', 'name'],
+    include: [
+      {
+        model: ApplicantState,
+        attributes: ['id', 'suggested_join_date'],
+        where: {
+          state_id: [10, 20],
+          suggested_join_date: {
+            $gte: moment().startOf('day').format('YYYY-MM-DD H:m:s'),
+          },
+        },
+        include: {
+          model: State,
+          attributes: ['name'],
+        },
       },
-      attributes: ['id',
-        'company_reg_name',
-        'reg_address',
-        'bank_name',
-        'branch',
-        'account_type',
-        'account_number',
-        'ifsc',
-        'micr',
-        'pan_verified',
-        'tan_verified',
-        'pan_number',
-        'tan_number',
-        'service_tax_enabled',
-        'service_tax_reg_number',
-        'msmed_enabled',
-        'msmed_number',
-        'org_size'
-      ]
-    })
-    .then(client => {
-      return res.json(client);
-    })
-    .catch(err => handleError(res, 500, err));
-}
-var img;
-export function company(req, res) {
-  Client
-    .find({
-      where: {
-        id: req.user.client_id
+      {
+        model: JobApplication,
+        attributes: ['id'],
+        include: [{
+          model: Job,
+          attributes: ['id', 'role', 'user_id'],
+        }],
       },
-      attributes: ['id',
-        'name',
-        'corp_address',
-        'entity_type_id',
-        'description',
-        'short_description',
-        'min_emp',
-        'max_emp',
-        'website',
-        'logo_id',
-        'cin_id',
-        'llp_id'
-      ],
+    ],
+    raw: true,
+  }).then(upcomingOfferApplicants => {
+    const _userIds = _.uniq(_.map(upcomingOfferApplicants, 'JobApplications.Job.user_id'));
+    if (!_userIds.length) return res.status(204).json([]);
+    return User.findAll({
+      where: {
+        id: _userIds,
+      },
+      attributes: ['id'],
       include: {
-        model: Logo,
-        attributes: ['logo', 'mime']
+        model: Client,
+        attributes: ['id', 'name'],
       },
-    })
-    .then(clientData => {
-      const client = clientData.toJSON();
-      let logo = new Buffer(client.Logo.logo).toString('base64');
-      client.logo = {
-        base64: logo,
-        filetype: client.Logo.mime
-      };
-      img = logo
-      delete client.Logo;
-      return res.json(client);
-    })
-    .catch(err => handleError(res, 500, err));
+    }).then(_userData => {
+      const upcomingOfferData = upcomingOfferApplicants.map((applicant) => {
+        const userId = _.get(applicant, 'JobApplications.Job.user_id');
+        return {
+          id: _.get(applicant, 'id'),
+          name: _.get(applicant, 'name'),
+          stateId: _.get(applicant, 'ApplicantState.State.id'),
+          stateName: _.get(applicant, 'ApplicantState.State.name'),
+          jobId: _.get(applicant, 'JobApplications.Job.id'),
+          jobRole: _.get(applicant, 'JobApplications.Job.role'),
+          jobClientId: userId,
+          jobClientName: _.get(_.filter(
+            _userData, user => user.id === userId)[0], 'Client.name'),
+          joinDate: moment(_.get(applicant, 'ApplicantState.suggested_join_date'))
+            .format('D/MM/YYYY'),
+        };
+      });
+      return res.json(upcomingOfferData);
+    });
+  });
 }
 
-export function profile(req, res) {
-  User
-    .find({
-      where: {
-        id: req.user.id
+export function upcomingInterviews(req, res) {
+  let fl = 'id,name,mobile,email,interview_type,interview_time,state_name,';
+  fl += 'exp_designation,exp_employer,_root_';
+  const solrQuery = Solr.createQuery()
+    .q('type_s:applicant')
+    .fl(fl)
+    .matchFilter('owner_id', req.user.id)
+    .rangeFilter([
+      {
+        field: 'interview_time',
+        start: moment().startOf('day').toISOString(),
+        end: moment().endOf('week').toISOString(),
       },
-      attributes: ['id',
-        'name',
-        'client_id',
-        'username',
-        'firstname',
-        'lastname',
-        'number',
-        'email_id',
-        'timestamp',
-        'admin_flag'
-      ]
-    })
-    .then(client => {
-      return res.json(client);
-    })
-    .catch(err => handleError(res, 500, err));
+    ])
+    .sort('interview_time', 'ASC')
+    .rows(100);
+  Solr.get('select', solrQuery, (err, result) => {
+    if (err) return handleError(res, 500, err);
+    const applicants = result.response.docs;
+    if (!applicants.length) return res.json(applicants);
+    const solrInnerQuery = db.Solr.createQuery()
+      .q(`id:(${applicants.map(a => a._root_).join(' OR ')}) AND type_s:job`)
+      .fl(['role', 'id', 'client_name'])
+      .rows(100);
+
+    // Get job to attach to results
+    return db.Solr.get('select', solrInnerQuery, (jobErr, jobResult) => {
+      if (jobErr) return handleError(res, 500, jobErr);
+      const jobs = jobResult.response.docs;
+      if (jobs.length) {
+        applicants.forEach((applicant, key) => {
+          applicants[key]._root_ = jobs
+            .filter(s => s.id === applicants[key]._root_)[0];
+        });
+      }
+      return res.json(applicants);
+    });
+  });
 }
 
-export function profileUpdate(req, res){
-  const userProfile = _.pick(req.body, ['id','number','email_id']);
-  User
-    .findById(req.user.id)
-    .then(user => {
-      return user.update(userProfile).then(userPro => {
-        const response = _.pick(userPro,['id'])
-        response.message = 'Success';
-        return res.json(response);
-      })
+export function latestProfiles(req, res) {
+  return JobAllocation.findAll({
+    where: {
+      user_id: req.user.id,
+      created_on: {
+        $gte: moment().startOf('day').format('YYYY-MM-DD H:m:s'),
+      },
+    },
+    attributes: ['job_id', 'created_on'],
+    raw: true,
+  }).then(newProfiles => {
+    if (newProfiles.length !== 0) {
+      const solrQuery2 = Solr.createQuery()
+        .q('type_s:job')
+        .fl('id,role,min_sal,max_sal,job_location,client_name')
+        .matchFilter('id', `(${_.map(newProfiles, 'job_id').join(' ')})`);
 
-    })
-    .catch(err => handleError(res, 500, err));
-}
-
-export function companyUpdate(req, res){
-  const companyData = _.pick(req.body, [
-    'name', 'corp_address', 'entity_type_id', 'description', 'short_description', 'min_emp',
-    'max_emp', 'website', 'logo_id', 'cin_id', 'llp_id',
-  ]);
-
-  const logoData = {
-    logo: new Buffer(req.body.logo.base64, 'base64'),
-    mime: req.body.logo.filetype,
-  };
-
-  Client
-    .findById(req.user.client_id)
-    .then(client => {
-      db.Logo.findById(client.logo_id)
-        .then(logo => logo.update(logoData))
-        .catch(logger.error);
-      return client.update(companyData).then(clientPro => {
-        const response = _.pick(clientPro,['id']);
-        response.message = 'Success';
-        return res.json(response);
-      })
-
-    })
-    .catch(err => handleError(res, 500, err));
-}
-
-export function billingUpdate(req, res){
-  const companyData = _.pick(req.body, [
-    'company_reg_name', 'reg_address', 'bank_name', 'branch', 'account_type',
-    'account_number', 'ifsc', 'micr', 'pan_verified', 'tan_verified', 'pan_number',
-    'tan_number',
-    'service_tax_enabled',
-    'service_tax_reg_number',
-    'msmed_enabled',
-    'msmed_number',
-    'org_size'
-  ]);
-  Client
-    .findById(req.user.client_id)
-    .then(client => {
-      return client.update(companyData).then(clientPro => {
-        const response = _.pick(clientPro,['id']);
-        response.message = 'Success';
-        return res.json(response);
-      })
-    })
-    .catch(err => handleError(res, 500, err));
+      Solr.getAsync('select', solrQuery2)
+        .then((allApplicantsJobs) => {
+          let newProfileData = allApplicantsJobs.response.docs;
+          newProfileData = newProfileData.map(data => {
+            const profile = { id: data.id, jobLocation: data.job_location,
+              role: data.role, client_name: data.client_name };
+            if (typeof data.max_sal !== undefined && typeof data.min_sal !== undefined) {
+              if (data.max_sal) {
+                profile.salaryRange = `${data.min_sal}-${data.max_sal} Lakhs`;
+              }
+            }
+            return profile;
+          });
+          res.json(newProfileData);
+        });
+    } else {
+      res.json([]);
+    }
+  })
+  .catch(err => handleError(res, 500, err));
 }

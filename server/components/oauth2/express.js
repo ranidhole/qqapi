@@ -33,8 +33,17 @@ export default function (app) {
     const response = new Response(res);
 
     return oauth.authorize(request, response)
-      .then(success => res.json(success))
+      .then(success => {
+        if (req.body.allow !== 'true') {
+          return res.json({
+            message: 'oauth2 experimental: authorize failed. Please req.body.allow != true',
+          });
+        }
+        // Todo: Testing not done
+        return res.status(400).json(success);
+      })
       .catch(err => res.status(500).json(err));
+    // Todo: cross check above code. Some confusion
     // ((req) => {
     //  if (req.body.allow !== 'true') return callback(null, false);
     //  return callback(null, true, req.user);

@@ -116,6 +116,37 @@ export function create(req, res) {
       .catch(err => handleError(res, 500, err));
   });
 }
+
+// Candidate Applying from apply.quezx
+export function apply(req, res) {
+  const form = new formidable.IncomingForm();
+  form.parse(req, (formErr, fields, files) => {
+    if (formErr) return handleError(res, 500, formErr);
+    const applicant = JSON.parse(fields.payload);
+    return Applicant.alreadyApplied(db, req.params.jobId, applicant.email_id, applicant.number)
+      .then(status => {
+        const message = 'Already candidate uploaded with this Phone or Email';
+        if (status.email === true || status.number === true) {
+          return res.status(409)
+            .json(_.extend({ message }, status));
+        }
+        const file = files.fileUpload;
+        const fileExt = file.name.split('.').pop(); // Extension
+        const allowedExtType = ['doc', 'docx', 'pdf', 'rtf', 'txt'];
+
+        if (allowedExtType.indexOf(fileExt.toLowerCase()) === -1) {
+          return res.status(400)
+            .json({ code: '400 Bad Request', message: 'File Type Not Allowed' });
+        }
+        const stateId = 42; // Pre Screening New
+        return Applicant.saveApplicant(db, applicant, file, req.user.id, req.params.jobId, stateId)
+          .then(savedApplicant => res.json(_.pick(savedApplicant, ['id'])));
+      })
+      .catch(err => handleError(res, 500, err));
+  });
+}
+
+
 export function reapply(req, res) {
   const jobId = req.params.jobId;
   const applicantId = req.body.applicant_id;

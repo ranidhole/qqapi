@@ -10,5 +10,6 @@ var router = express.Router();
 router.get('/', authenticate(), controller.index);
 router.get('/apply', authenticate2({ scope: 'apply' }), controller.index);
 router.post('/', authenticate(), controller.index);
+router.post('/apply', authenticate2({ scope: 'apply' }), controller.index);
 
 module.exports = router;

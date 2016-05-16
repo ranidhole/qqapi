@@ -248,6 +248,8 @@ function saveToken(token, client, user) {
         user,
         access_token: token.accessToken, // proxy
         refresh_token: token.refreshToken, // proxy
+        expires_in: 3600, // Todo: temporary fix
+        token_type: 'bearer', // Todo: temporary fix
       },
       token
     ))

@@ -44,8 +44,8 @@ export default function (app) {
   app.oauth.authenticate = require('./../components/oauthjs/authenticate')
 
   // OAuth Authorise from Third party applications
-  app.use('/authorise', require('./../api/authorise'));  // /authorise
-  app.use('/api/authorise', require('./../api/authorise'));  // /authorise
+  app.use('/authorise', app.oauth.authenticate(), require('./../api/authorise'));  // /authorise
+  app.use('/api/authorise', app.oauth.authenticate(), require('./../api/authorise'));  // /authorise
 
 
   if (env === 'production') {

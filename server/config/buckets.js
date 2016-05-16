@@ -18,19 +18,19 @@ const BUCKETS = {
     ALL: [
       24, 22, 33, 6, 32, 19, 35, 8, 5, 17, 12, 21, 23, 25, 9, 4, 10,
       15, 20, 36, 28, 29, 30, 31, 13, 14, 2, 3, 18, 11, 39, 40, 38, 27,
-      41, 1, 16, 34, 26
+      41, 1, 16, 34, 26, 42,
     ],
     TASKS: [
       24, 22, 33, 6, 32, 19, 35, 8, 5, 17, 12, 21,
     ],
     SHORTLISTED: [
-      24, 22, 33, 19, 35, 8, 5, 17, 12, 21, 23, 25, 9, 4, 10, 15, 20, 36, 28, 29, 30, 31
+      24, 22, 33, 19, 35, 8, 5, 17, 12, 21, 23, 25, 9, 4, 10, 15, 20, 36, 28, 29, 30, 31,
     ],
     FEEDBACK: [
-      23, 25, 9, 4, 27, 1, 41, 16, 34, 26, 39
+      23, 25, 9, 4, 27, 1, 41, 16, 34, 26, 39,
     ],
     REJECTED: [
-      13, 14, 2, 3, 18, 11, 39, 40, 38
+      13, 14, 2, 3, 18, 11, 39, 40, 38,
     ],
   },
   QUEZX: {
@@ -49,20 +49,20 @@ const BUCKETS = {
     ],
   },
   // Todo: Database mappings
-  GROUPS:{
+  GROUPS: {
     GLORY_CLIENTS: 1,
     CONSULTANTS: 2,
-    CANDIDATES:3,
+    CANDIDATES: 3,
     INTERNAL_TEAM: 4,
-    UBER_CLIENT_RECRUITERS:5,
-    NORMAL_USER:6,
-    QUEZX_AND_QUARC_CONSULTANT:7,
-    SCREENING:8,
-    ADMIN_UBER:9,
-    BUSINESS_TEAM:10,
-    INTERNAL_TEAM_UBER:11,
-    UBER_CLIENT_FINANCE:12
-  }
+    UBER_CLIENT_RECRUITERS: 5,
+    NORMAL_USER: 6,
+    QUEZX_AND_QUARC_CONSULTANT: 7,
+    SCREENING: 8,
+    ADMIN_UBER: 9,
+    BUSINESS_TEAM: 10,
+    INTERNAL_TEAM_UBER: 11,
+    UBER_CLIENT_FINANCE: 12,
+  },
 };
 
 module.exports = BUCKETS;

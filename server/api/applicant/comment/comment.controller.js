@@ -46,7 +46,7 @@ export function index(req, res) {
       User.findAll({
         attributes: ['id', 'name', 'group_id'],
         where: {
-          id: comments.map(c => c.user_id),
+          id: _.uniq(comments.map(c => c.user_id)),
         },
       })
       .then((userModels) => {

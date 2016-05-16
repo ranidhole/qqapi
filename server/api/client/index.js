@@ -13,7 +13,12 @@ router.get('/company', controller.company);
 router.post('/company', controller.companyUpdate);
 router.get('/profile', controller.profile);
 router.post('/profile', controller.profileUpdate);
-router.get('/dashboard', controller.dashboard);
+router.get('/dashboard/actionCounts', controller.actionCounts);
+router.get('/dashboard/ratingAndRatios', controller.ratingAndRatios);
+router.get('/dashboard/forActions', controller.forActions);
+router.get('/dashboard/upcomingOffers', controller.upcomingOffers);
+router.get('/dashboard/upcomingInterviews', controller.upcomingInterviews);
+router.get('/dashboard/latestProfiles', controller.latestProfiles);
 router.get('/checkTerminationStatus', controller.checkTerminationStatus);
 router.post('/makeUserActive', controller.makeUserActive);
 router.get('/agreement', controller.agreement);
@@ -26,5 +31,3 @@ router.post('/updatePreferences', controller.updatePreferences);
 // router.delete('/:id', controller.destroy);
 
 module.exports = router;
-
-

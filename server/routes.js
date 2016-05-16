@@ -81,7 +81,7 @@ export default function(app) {
   app.use('/api/jobComments', app.oauth.authenticate(), require('./api/jobComment'));
   app.use('/api/applicantStates', app.oauth.authenticate(), require('./api/applicantState'));
   app.use('/api/jobs', app.oauth.authenticate(), require('./api/job/comment'));
-  app.use('/api/jobs', app.oauth.authenticate(), require('./api/job/applicant'));
+  app.use('/api/jobs', require('./api/job/applicant'));
   app.use('/api/jobAllocations', app.oauth.authenticate(), require('./api/jobAllocation'));
   app.use('/api/jobs', app.oauth.authenticate(), require('./api/job'));
   app.use('/api/jobs', app.oauth.authenticate(), require('./api/job/applicant'));
