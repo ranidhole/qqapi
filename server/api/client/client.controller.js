@@ -544,7 +544,7 @@ export function upcomingInterviews(req, res) {
   const solrQuery = Solr.createQuery()
     .q('type_s:applicant')
     .fl(fl)
-    .matchFilter('owner_id', req.user.id)
+    .matchFilter('state_id', `(5 8 17) AND owner_id:${req.user.id}`)
     .rangeFilter([
       {
         field: 'interview_time',
