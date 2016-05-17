@@ -2,14 +2,12 @@
  * Main application file
  */
 
-'use strict';
-
 import express from 'express';
 import sqldb from './sqldb';
 import config from './config/environment';
 import http from 'http';
 import slack from './components/slack/index.js';
-
+GLOBAL.logger = {error : console.log}
 // Populate databases with sample data
 //if (config.seedDB) { require('./config/seed'); }
 

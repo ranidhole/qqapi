@@ -28,6 +28,16 @@ module.exports = function ClientModel(sequelize, DataTypes) {
       },
       allowNull: false,
     },
+    short_description: {
+      type: DataTypes.STRING(50),
+      validate: {
+        len: {
+          args: [0, 50],
+          msg: 'Maximum length for description field is 1000',
+        },
+      },
+      allowNull: false,
+    },
     pan_number: {
       type: DataTypes.STRING(10),
       validate: {
@@ -73,21 +83,27 @@ module.exports = function ClientModel(sequelize, DataTypes) {
     service_tax_reg_number: {
       type: DataTypes.STRING(15),
       validate: {
-        isInt: {
-          msg: 'service_tax_reg_number field should be an integer',
-        },
         len: {
           args: [0, 15],
           msg: 'Maximum length for service_tax_reg_number field is 15',
         },
       },
     },
+    service_tax_enabled: {
+      type: DataTypes.STRING(15),
+      validate: {
+        isInt: {
+          msg: 'service_tax_enabled field should be an integer',
+        },
+        len: {
+          args: [0, 1],
+          msg: 'Maximum length for service_tax_enabled field is 1',
+        },
+      },
+    },
     company_reg_name: {
       type: DataTypes.STRING(255),
       validate: {
-        isInt: {
-          msg: 'company_reg_name field should be an integer',
-        },
         len: {
           args: [0, 255],
           msg: 'Maximum length for company_reg_name field is 255',
@@ -97,9 +113,6 @@ module.exports = function ClientModel(sequelize, DataTypes) {
     reg_address: {
       type: DataTypes.STRING(500),
       validate: {
-        isInt: {
-          msg: 'reg_address field should be an integer',
-        },
         len: {
           args: [0, 500],
           msg: 'Maximum length for reg_address field is 500',
@@ -109,9 +122,6 @@ module.exports = function ClientModel(sequelize, DataTypes) {
     corp_address: {
       type: DataTypes.STRING(500),
       validate: {
-        isInt: {
-          msg: 'corp_address field should be an integer',
-        },
         len: {
           args: [0, 500],
           msg: 'Maximum length for corp_address field is 500',
@@ -145,9 +155,6 @@ module.exports = function ClientModel(sequelize, DataTypes) {
     website: {
       type: DataTypes.STRING(500),
       validate: {
-        isInt: {
-          msg: 'website field should be an integer',
-        },
         len: {
           args: [0, 500],
           msg: 'Maximum length for website field is 500',
@@ -270,6 +277,118 @@ module.exports = function ClientModel(sequelize, DataTypes) {
       },
       defaultValue: 3,
     },
+    bank_name: {
+      type: DataTypes.STRING(100),
+      validate: {
+        len: {
+          args: [0, 100],
+          msg: 'Maximum length for bank_name field is 100',
+        },
+      },
+    },
+    branch: {
+      type: DataTypes.STRING(50),
+      validate: {
+        len: {
+          args: [0, 50],
+          msg: 'Maximum length for branch field is 50',
+        },
+      },
+    },
+    account_type: {
+      type: DataTypes.INTEGER(1),
+      validate: {
+        len: {
+          args: [0, 4],
+          msg: 'Maximum length for account_type field is 4',
+        },
+      },
+    },
+    account_number: {
+      type: DataTypes.STRING(50),
+      validate: {
+        len: {
+          args: [0, 50],
+          msg: 'Maximum length for account_number field is 50',
+        },
+      },
+    },
+    ifsc: {
+      type: DataTypes.STRING(50),
+      validate: {
+        len: {
+          args: [0, 50],
+          msg: 'Maximum length for ifsc field is 50',
+        },
+      },
+    },
+    micr: {
+      type: DataTypes.STRING(50),
+      validate: {
+        len: {
+          args: [0, 50],
+          msg: 'Maximum length for micr field is 50',
+        },
+      },
+    },
+    msmed_enabled: {
+      type: DataTypes.INTEGER(1),
+      validate: {
+        len: {
+          args: [0, 1],
+          msg: 'Maximum length for msmed_enabled field is 1',
+        },
+      },
+    },
+    msmed_number: {
+      type: DataTypes.STRING(50),
+      validate: {
+        len: {
+          args: [0, 50],
+          msg: 'Maximum length for msmed_number field is 50',
+        },
+      },
+    },
+    org_size: {
+      type: DataTypes.INTEGER(11),
+      validate: {
+        len: {
+          args: [0, 11],
+          msg: 'Maximum length for org_size field is 11',
+        },
+      },
+      defaultValue: 0,
+    },
+    entity_type_id: {
+      type: DataTypes.INTEGER(4),
+      validate: {
+        len: {
+          args: [0, 4],
+          msg: 'Maximum length for entity_type_id field is 4',
+        },
+      },
+      defaultValue: 0,
+    },
+    cin_id: {
+      type: DataTypes.STRING(50),
+      validate: {
+        len: {
+          args: [0, 50],
+          msg: 'Maximum length for cin_id field is 50',
+        },
+      },
+      defaultValue: 0,
+    },
+    llp_id: {
+      type: DataTypes.STRING(50),
+      validate: {
+        len: {
+          args: [0, 50],
+          msg: 'Maximum length for llp_id field is 50',
+        },
+      },
+      defaultValue: 0,
+    },
   }, {
     tableName: 'clients',
     timestamps: false,
@@ -306,6 +425,10 @@ module.exports = function ClientModel(sequelize, DataTypes) {
 
         Client.belongsTo(models.Logo, {
           foreignKey: 'logo_id',
+        });
+
+        Client.belongsTo(models.EntityType, {
+          foreignKey: 'entity_type_id',
         });
       },
     },

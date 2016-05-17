@@ -7,6 +7,12 @@ var router = express.Router();
 
 // router.get('/', controller.index);
 router.get('/preferences', controller.preferences);
+router.get('/billing', controller.billing);
+router.post('/billing', controller.billingUpdate);
+router.get('/company', controller.company);
+router.post('/company', controller.companyUpdate);
+router.get('/profile', controller.profile);
+router.post('/profile', controller.profileUpdate);
 router.get('/dashboard', controller.dashboard);
 router.get('/checkTerminationStatus', controller.checkTerminationStatus);
 router.post('/makeUserActive', controller.makeUserActive);
@@ -20,3 +26,5 @@ router.post('/updatePreferences', controller.updatePreferences);
 // router.delete('/:id', controller.destroy);
 
 module.exports = router;
+
+

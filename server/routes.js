@@ -10,6 +10,8 @@ import path from 'canonical-path';
 export default function(app) {
 
   // Insert routes below
+  app.use('/api/entityTypes', require('./api/entityType'));
+  app.use('/api/EntityTypes', require('./api/EntityType'));
   app.use('/api/clientPaymentDesignations', require('./api/clientPaymentDesignation'));
   app.use('/api/agreements', require('./api/agreement'));
   app.use('/api/clientPaymentMaps', require('./api/clientPaymentMap'));

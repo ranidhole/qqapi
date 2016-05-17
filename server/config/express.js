@@ -23,7 +23,7 @@ export default function (app) {
   app.use(cors());
   app.use(compression());
   app.use(bodyParser.urlencoded({extended: false}));
-  app.use(bodyParser.json());
+  app.use(bodyParser.json({limit: '50mb'}));
   app.use(methodOverride());
   app.use(cookieParser());
 
