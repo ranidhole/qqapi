@@ -616,3 +616,162 @@ export function latestProfiles(req, res) {
   })
   .catch(err => handleError(res, 500, err));
 }
+
+export function billing(req, res) {
+  Client
+    .find({
+      where: {
+        id: req.user.client_id
+      },
+      attributes: ['id',
+        'company_reg_name',
+        'reg_address',
+        'bank_name',
+        'branch',
+        'account_type',
+        'account_number',
+        'ifsc',
+        'micr',
+        'pan_verified',
+        'tan_verified',
+        'pan_number',
+        'tan_number',
+        'service_tax_enabled',
+        'service_tax_reg_number',
+        'msmed_enabled',
+        'msmed_number',
+        'org_size'
+      ]
+    })
+    .then(client => {
+      return res.json(client);
+    })
+    .catch(err => handleError(res, 500, err));
+}
+var img;
+export function company(req, res) {
+  Client
+    .find({
+      where: {
+        id: req.user.client_id
+      },
+      attributes: ['id',
+        'name',
+        'corp_address',
+        'entity_type_id',
+        'description',
+        'short_description',
+        'min_emp',
+        'max_emp',
+        'website',
+        'logo_id',
+        'cin_id',
+        'llp_id'
+      ],
+      include: {
+        model: db.Logo,
+        attributes: ['logo', 'mime']
+      },
+    })
+    .then(clientData => {
+      const client = clientData.toJSON();
+      let logo = new Buffer(client.Logo.logo).toString('base64');
+      client.logo = {
+        base64: logo,
+        filetype: client.Logo.mime
+      };
+      img = logo
+      delete client.Logo;
+      return res.json(client);
+    })
+    .catch(err => handleError(res, 500, err));
+}
+
+export function profile(req, res) {
+  User
+    .find({
+      where: {
+        id: req.user.id
+      },
+      attributes: ['id',
+        'name',
+        'client_id',
+        'username',
+        'firstname',
+        'lastname',
+        'number',
+        'email_id',
+        'timestamp',
+        'admin_flag'
+      ]
+    })
+    .then(client => {
+      return res.json(client);
+    })
+    .catch(err => handleError(res, 500, err));
+}
+
+export function profileUpdate(req, res){
+  const userProfile = _.pick(req.body, ['id','number','email_id']);
+  User
+    .findById(req.user.id)
+    .then(user => {
+      return user.update(userProfile).then(userPro => {
+        const response = _.pick(userPro,['id'])
+        response.message = 'Success';
+        return res.json(response);
+      })
+
+    })
+    .catch(err => handleError(res, 500, err));
+}
+
+export function companyUpdate(req, res){
+  const companyData = _.pick(req.body, [
+    'name', 'corp_address', 'entity_type_id', 'description', 'short_description', 'min_emp',
+    'max_emp', 'website', 'logo_id', 'cin_id', 'llp_id',
+  ]);
+
+  const logoData = {
+    logo: new Buffer(req.body.logo.base64, 'base64'),
+    mime: req.body.logo.filetype,
+  };
+
+  Client
+    .findById(req.user.client_id)
+    .then(client => {
+      db.Logo.findById(client.logo_id)
+        .then(logo => logo.update(logoData))
+        .catch(logger.error);
+      return client.update(companyData).then(clientPro => {
+        const response = _.pick(clientPro,['id']);
+        response.message = 'Success';
+        return res.json(response);
+      })
+
+    })
+    .catch(err => handleError(res, 500, err));
+}
+
+export function billingUpdate(req, res){
+  const companyData = _.pick(req.body, [
+    'company_reg_name', 'reg_address', 'bank_name', 'branch', 'account_type',
+    'account_number', 'ifsc', 'micr', 'pan_verified', 'tan_verified', 'pan_number',
+    'tan_number',
+    'service_tax_enabled',
+    'service_tax_reg_number',
+    'msmed_enabled',
+    'msmed_number',
+    'org_size'
+  ]);
+  Client
+    .findById(req.user.client_id)
+    .then(client => {
+      return client.update(companyData).then(clientPro => {
+        const response = _.pick(clientPro,['id']);
+        response.message = 'Success';
+        return res.json(response);
+      })
+    })
+    .catch(err => handleError(res, 500, err));
+}
