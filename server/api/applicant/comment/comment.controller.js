@@ -9,7 +9,7 @@
 
 import _ from 'lodash';
 import db, { QueuedTask, Job, JobApplication, Comment, User, ApplicantState,
-  BUCKETS, STAKEHOLDERS } from '../../../sqldb';
+  BUCKETS, STAKEHOLDERS, InterviewFollowUp } from '../../../sqldb';
 import logger from '../../../components/logger';
 
 function handleError(res, argStatusCode, err) {
@@ -36,6 +36,17 @@ export function index(req, res) {
       applicant_id: req.params.applicantId,
       state_id: BUCKETS[STAKEHOLDERS[req.user.group_id]].ALL,
     },
+    include: [{
+      model: db.InterviewFollowUp,
+      include: {
+        model: db.FollowUpOption
+      }
+    },{
+      model: db.State,
+      include: [{
+        model: db.FollowUpOption
+      }]
+    }]
   });
 
   Promise.all([commentsPromise, stateCommentsPromise])
@@ -132,6 +143,20 @@ export function create(req, res) {
         });
       })
       .catch(logger.error);
+    })
+    .catch(err => handleError(res, 500, err));
+}
+
+
+export function interviewFollowUps(req, res) {
+  InterviewFollowUp
+    .build({follow_up_option_id : req.body.followUpOptionId})
+    .set('applicant_id', req.params.applicantId)
+    .set('applicant_state_id', req.params.commentId)
+    .set('created_by', req.user.id)
+    .save()
+    .then(c => {
+      return res.status(201).json(_.pick(c, ['id', 'status']));
     })
     .catch(err => handleError(res, 500, err));
 }
