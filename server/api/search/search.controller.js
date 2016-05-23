@@ -401,6 +401,26 @@ function currentConsultantAllocJobsByClient(clientIds) {
   });
 }
 
+function clientUsersJobManage(clientId) {
+  const field = 'role';
+  return (req, res) => db.User.findAll({
+    where: {
+      client_id: clientId,
+    },
+  }).then(clientUsers => {
+    const clientUsersIds = clientUsers.map(user => user.id);
+    return db.Job.findAll({
+      limit: Number(req.query.limit) || 10,
+      offset: Number(req.query.offset) || 0,
+      attributes: ['id', [field, 'name']],
+      where: { status: 1, user_id: clientUsersIds, role: { $like: `${req.query.q}%` } },
+    }).then(jobs => {
+
+      return res.json(jobs);
+    }).catch(err => handleError(res, 500, err));
+  });
+}
+
 
 // Gets a list of SearchsFunc
 export function index(req, res) {
@@ -464,6 +484,9 @@ export function index(req, res) {
         break;
       case 'current_consultant_alloc_jobs_by_client':
         currentConsultantAllocJobsByClient(req.query.id)(req, res);
+        break;
+      case 'client_users_job_manage':
+        clientUsersJobManage(req.query.id)(req, res);
         break;
       default:
         break;

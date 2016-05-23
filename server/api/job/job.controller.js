@@ -456,7 +456,7 @@ export function show(req, res) {
         const logo = new Buffer(client.Logo.logo).toString('base64');
         client.logo = `data:${client.Logo.mime};base64,${logo}`;
         job[0]._root_ = _.pick(client, clientAttr.concat(['logo', 'payment']));
-        res.json(job[0]);
+        return job[0];
       })));
     } else {
       promise = Promise.resolve(job);

@@ -258,9 +258,11 @@ export function show(req, res) {
 
 export function update(req, res) {
   db.Applicant.getFullDetails(db, req.params.applicantId).then(exApplicant => {
-    const editAllowedStates = [27, 6, 13, 32]; // 27:Scr Pend 6:SHold 13:SReject 32:SAttempt
-    if (editAllowedStates.indexOf(exApplicant.state_id) === -1) {
-      return res.status(400).json({ message: 'Currently editing CV not allowed' });
+    if (db.BUCKETS.GROUPS.CONSULTANT === '2') {
+      const editAllowedStates = [27, 6, 13, 32]; // 27:Scr Pend 6:SHold 13:SReject 32:SAttempt
+      if (editAllowedStates.indexOf(exApplicant.state_id) === -1) {
+        return res.status(400).json({ message: 'Currently editing CV not allowed' });
+      }
     }
     let reqPr = [];
     if (req.get('Content-Type').search('json') === -1) {

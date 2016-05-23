@@ -94,7 +94,7 @@ export function states(req, res) {
           model: db.ActionableState,
           as: 'Actions',
           where: {
-            group_id: 2,
+            group_id: req.user.group_id,
           },
           attributes: [['child_id', 'state_id']],
           required: false,
@@ -115,5 +115,3 @@ export function states(req, res) {
     })
     .catch(err => handleError(res, 500, err));
 }
-
-
